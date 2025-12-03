@@ -1,0 +1,21 @@
+{
+	"version":3,
+	"model":"19ena_cloth001_3.1_f_t01.moc3",
+	"textures":[
+		"19ena_cloth001_3.1_f_t01.2048/texture_00.png"
+	],
+	"motions":{
+		"idle":[
+			{"file":"motions/w-adult-blushed01.motion3.json"}
+		],
+		"":[
+			{"file":"motions/w-happy-angry01.motion3.json"}
+		]
+	},
+	"physics":"19ena_cloth001_3.1_f_t01.physics3.json",
+	"hit_areas":[
+		{"name":"head","id":"D_REF.HEAD"},
+		{"name":"body","id":"D_REF.BODY"},
+		{"name":"hand","id":"D_REF.HAND"}
+	]
+}

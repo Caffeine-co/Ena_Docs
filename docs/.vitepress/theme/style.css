@@ -1,0 +1,215 @@
+/**
+ * Theme: Shinonome Ena (Project Sekai - 25-ji, Nightcord de.)
+ * Concept: Canvas, Selfies, & Midnight Digital
+ */
+
+/* -------------------------------------------------------------------------- */
+/* 基础色板定义                                 */
+/* -------------------------------------------------------------------------- */
+:root {
+  /* Ena Core: 官方印象色 #CCAA88 的变体用于 UI 交互 */
+  /* 为了保证可读性，Brand-1 (文字/图标) 进行了加深处理 */
+  --vp-c-ena-1: #A67258; /* 深棕红/干画颜料 - 用于深色文字 */
+  --vp-c-ena-2: #BD8569; /* 悬停色 */
+  --vp-c-ena-3: #CCAA88; /* 官方印象色 (绘名棕) - 用于按钮背景 */
+  --vp-c-ena-soft: rgba(204, 170, 136, 0.18); /* 柔和背景 */
+
+  /* Niigo Vibe: 25时的紫色氛围，用于暗色模式基调 */
+  --vp-c-niigo-dark-bg: #1e1b24; /* 深紫灰 */
+  --vp-c-niigo-dark-bg-alt: #16131a; /* 更深的紫黑 */
+}
+
+/* -------------------------------------------------------------------------- */
+/* 亮色模式                                   */
+/* -------------------------------------------------------------------------- */
+:root {
+  /* --- 基础背景与文字 (画室氛围) --- */
+  --vp-c-bg: #FCFAF8; /* 接近画纸的暖白 */
+  --vp-c-bg-alt: #F2EFED; /* 浅亚麻色，用于侧边栏 */
+  --vp-c-bg-elv: #FFFFFF;
+  --vp-c-bg-soft: #F0EAE6;
+
+  /* --- 灰色系 (暖灰/灰褐) --- */
+  /* 用于次要文字、边框 */
+  --vp-c-gray-1: #4A403A; /* 深褐灰 - 主要文字 */
+  --vp-c-gray-2: #7D7068;
+  --vp-c-gray-3: #B0A6A0;
+  --vp-c-gray-soft: rgba(125, 112, 104, 0.14);
+
+  /* --- 边框 --- */
+  --vp-c-border: #E0D6D0;
+  --vp-c-divider: #EBE0DA;
+  --vp-c-gutter: #EBE0DA;
+
+  /* --- 品牌色 (Ena Theme) --- */
+  --vp-c-brand-1: var(--vp-c-ena-1);
+  --vp-c-brand-2: var(--vp-c-ena-2);
+  --vp-c-brand-3: var(--vp-c-ena-3);
+  --vp-c-brand-soft: var(--vp-c-ena-soft);
+
+  /* --- 文字颜色 --- */
+  --vp-c-text-1: #3D3530; /* 炭笔黑 */
+  --vp-c-text-2: #6E6058; /* 铅笔灰 */
+  --vp-c-text-3: #9C8E85;
+
+  /* --- 功能色 --- */
+  /* Danger: 象征绘名崩溃/宣泄情绪时的深红色 */
+  --vp-c-danger-1: #C23B4E;
+  --vp-c-danger-2: #D64C5F;
+  --vp-c-danger-3: #E06071;
+  --vp-c-danger-soft: rgba(194, 59, 78, 0.14);
+
+  /* Warning: 象征未干的油画颜料黄 */
+  --vp-c-warning-1: #B88523;
+  --vp-c-warning-2: #D49E3B;
+  --vp-c-warning-3: #E6B350;
+  --vp-c-warning-soft: rgba(230, 179, 80, 0.14);
+  
+  /* Tip/Success: 象征绘名发饰/眼睛的橄榄棕绿 */
+  --vp-c-tip-1: #5E6648;
+  --vp-c-tip-2: #737D5A;
+  --vp-c-tip-3: #89946E;
+  --vp-c-tip-soft: rgba(94, 102, 72, 0.14);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 暗色模式                                   */
+/* -------------------------------------------------------------------------- */
+.dark {
+  /* --- 基础背景 (Nightcord 氛围) --- */
+  --vp-c-bg: var(--vp-c-niigo-dark-bg);
+  --vp-c-bg-alt: var(--vp-c-niigo-dark-bg-alt);
+  --vp-c-bg-elv: #25212b; /* 浮层卡片 */
+  --vp-c-bg-soft: #2a2630;
+
+  /* --- 灰色系 (冷调紫灰) --- */
+  --vp-c-gray-1: #B8B0C4;
+  --vp-c-gray-2: #8F8699;
+  --vp-c-gray-3: #5F5966;
+  --vp-c-gray-soft: rgba(140, 130, 160, 0.16);
+
+  /* --- 边框 --- */
+  --vp-c-border: #3E3845;
+  --vp-c-divider: #2F2A33;
+  --vp-c-gutter: #16131a;
+
+  /* --- 品牌色 (在暗色中发光的绘名色) --- */
+  /* 暗色模式下，Brand-1 需要更亮以保证在深紫背景上的对比度 */
+  --vp-c-brand-1: #E6C2A6; /* 提亮的浅驼色 */
+  --vp-c-brand-2: #D9B395;
+  --vp-c-brand-3: #CCAA88; /* 保持原色 */
+  --vp-c-brand-soft: rgba(204, 170, 136, 0.20); /* 增加一点透明度 */
+
+  /* --- 文字颜色 --- */
+  --vp-c-text-1: #F0EDE8; /* 屏幕亮白 */
+  --vp-c-text-2: #ABA4B5; /* Niigo 紫灰字 */
+  --vp-c-text-3: #756E7D;
+
+  /* --- 功能色适配 --- */
+  --vp-c-danger-1: #FF7082; /* 霓虹红 */
+  --vp-c-warning-1: #FAD069; /* 霓虹黄 */
+  --vp-c-tip-1: #9EA87B; /* 荧光橄榄 */
+}
+
+/* -------------------------------------------------------------------------- */
+/* 组件样式覆盖 (Components)                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * 按钮 (Button)
+ * 绘名风格：实心按钮使用官方色，文字反白
+ */
+:root {
+  --vp-button-brand-border: transparent;
+  --vp-button-brand-text: #FFFFFF;
+  --vp-button-brand-bg: var(--vp-c-brand-3); /* #CCAA88 */
+  
+  --vp-button-brand-hover-border: transparent;
+  --vp-button-brand-hover-text: #FFFFFF;
+  --vp-button-brand-hover-bg: var(--vp-c-brand-2);
+  
+  --vp-button-brand-active-border: transparent;
+  --vp-button-brand-active-text: #FFFFFF;
+  --vp-button-brand-active-bg: var(--vp-c-brand-1);
+}
+
+/**
+ * 首页英雄区 (Home Hero)
+ * 核心视觉：绘名色 -> Niigo紫的渐变，模拟从现实到数码世界的过渡
+ */
+:root {
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: -webkit-linear-gradient(
+    120deg,
+    var(--vp-c-brand-1) 30%, /* Ena Brown */
+    #9B6BC2 /* Niigo Light Purple */
+  );
+
+  --vp-home-hero-image-background-image: linear-gradient(
+    -45deg,
+    #CCAA88 30%, /* Ena Official */
+    #694F94 70%  /* Niigo Purple */
+  );
+  --vp-home-hero-image-filter: blur(50px) saturate(140%);
+}
+
+.dark {
+  /* 暗色模式下增强霓虹感 */
+  --vp-home-hero-name-background: -webkit-linear-gradient(
+    120deg,
+    #FFD4B8 30%, /* Glowing Ena */
+    #D69FFF      /* Glowing Purple */
+  );
+}
+
+/**
+ * 自定义块 (Custom Block)
+ * 重新映射 TIP/INFO 等颜色，使其更符合角色印象
+ */
+:root {
+  --vp-custom-block-tip-border: transparent;
+  --vp-custom-block-tip-text: var(--vp-c-text-1);
+  --vp-custom-block-tip-bg: var(--vp-c-brand-soft);
+  --vp-custom-block-tip-code-bg: var(--vp-c-brand-soft);
+  
+  /* Warning 使用稍微复古的黄色背景 */
+  --vp-custom-block-warning-bg: rgba(230, 179, 80, 0.1);
+  
+  /* Danger 使用低饱和度的红色背景，体现压抑感 */
+  --vp-custom-block-danger-bg: rgba(194, 59, 78, 0.1);
+}
+
+/**
+ * 搜索框 (Algolia/Local Search)
+ * 强调色使用 Ena 主题色
+ */
+.DocSearch {
+  --docsearch-primary-color: var(--vp-c-brand-1) !important;
+}
+
+/* 局部搜索高亮 */
+:root {
+  --vp-local-search-highlight-bg: var(--vp-c-brand-1);
+  --vp-local-search-result-selected-border: var(--vp-c-brand-1);
+}
+
+/**
+ * 滚动条美化 (可选，增加精致感)
+ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--vp-c-gutter);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--vp-c-brand-3);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
