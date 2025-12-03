@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  base: '/Ena_Docs/',
+  base: '/',  // /Ena_Docs/
   title: 'えななん',  // Enanan
   titleTemplate: 'Enanan',
   description: 'Enanan',
