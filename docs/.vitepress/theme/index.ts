@@ -2,15 +2,20 @@
 import { h } from 'vue'
 import type { Theme } from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
+import Layout from './Layout.vue'
 import './style.css'
 
 export default {
   extends: DefaultTheme,
-  Layout: () => {
-    return h(DefaultTheme.Layout, null, {
+  // ...DefaultTheme,
+  // Layout: () => {
+    // return h(DefaultTheme.Layout, null, {
       // https://vitepress.dev/guide/extending-default-theme#layout-slots
-    })
-  },
+    // })
+  // },
+  // 使用自定义的 Layout 组件来覆盖默认 Layout
+  // 这样可以将 MusicPlayer 注入到全局结构中
+  Layout: Layout,
   // enhanceApp({ app, router, siteData }) {
     // ...
   // }
