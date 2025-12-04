@@ -141,7 +141,7 @@ const playlist = [
   },
   {
     title: "アイディスマイル (instrumental)",
-    artist: "25時、ナイトコードで。",
+    artist: "25时、ナイトコードで。",
     src: "/music/04 アイディスマイル (instrumental).wav", 
     cover: "/music/jacket_s_116.png" 
   },
@@ -494,7 +494,7 @@ onMounted(() => {
     color: var(--vp-c-text-2);
 }
 
-/* --- 音量进度条样式 (目标: 匹配歌曲进度条的扁平样式，无突出滑块) --- */
+/* --- 音量进度条样式 (目标: 修复 WebKit 渲染问题) --- */
 .volume-slider {
   /* 基础重置和尺寸 */
   -webkit-appearance: none;
@@ -503,36 +503,35 @@ onMounted(() => {
   height: 3px; /* 匹配歌曲进度条高度 */
   background: transparent; 
   outline: none;
-  opacity: 1; /* 始终完全可见，匹配歌曲进度条 */
+  opacity: 1; 
   transition: opacity 0.2s;
   cursor: pointer;
-  padding: 0; /* 确保不影响高度 */
-  margin: 0; /* 确保不影响位置 */
+  padding: 0; 
+  margin: 0; 
 }
 
 /* 轨道样式 (Webkit - Chrome/Safari) */
 .volume-slider::-webkit-slider-runnable-track {
   width: 100%;
-  height: 3px; /* 匹配歌曲进度条高度 */
+  height: 3px; 
   background: var(--vp-c-divider); /* 背景色 */
   border-radius: 2px;
   cursor: pointer;
 }
 
-/* 滑块头样式 (Webkit - Chrome/Safari) - 关键: 隐藏滑块但保留可拖动区域 */
+/* 滑块头样式 (Webkit - Chrome/Safari) - 已修复：移除 box-shadow 填充黑客，改为小圆点滑块 */
 .volume-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 10px; /* 保留一个可拖动的小区域 */
-  height: 10px;
+  width: 8px; /* 减小滑块尺寸 */
+  height: 8px;
   border-radius: 50%;
-  background: transparent; /* 完全透明 */
+  background: var(--vp-c-brand); /* 使用主题色作为滑块颜色 */
   cursor: pointer;
-  box-shadow: none;
-  /* margin-top 将透明滑块居中于 3px 的轨道上 (10/2 - 3/2 = 3.5) */
-  margin-top: -3.5px; 
-  /* 使用 box-shadow 模拟填充进度条，这是 Webkit 隐藏滑块后显示填充的常见技巧 */
-  box-shadow: -100px 0 0 100px var(--vp-c-brand); 
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* 添加轻微阴影 */
+  /* margin-top 使 8px 的滑块居中于 3px 的轨道上 */
+  margin-top: -2.5px; 
+  /* 移除了导致渲染错误的 box-shadow 进度条填充黑客 */
 }
 
 /* 轨道样式 (Firefox) */
@@ -551,12 +550,12 @@ onMounted(() => {
   border-radius: 2px;
 }
 
-/* 滑块头样式 (Mozilla) - 关键: 隐藏滑块但保留可拖动区域 */
+/* 滑块头样式 (Mozilla) */
 .volume-slider::-moz-range-thumb {
-  width: 10px;
-  height: 10px;
+  width: 8px; /* 减小滑块尺寸 */
+  height: 8px;
   border-radius: 50%;
-  background: transparent; /* 完全透明 */
+  background: var(--vp-c-brand); /* 使用主题色作为滑块颜色 */
   cursor: pointer;
   border: none;
 }
@@ -575,19 +574,13 @@ onMounted(() => {
 /* --- 移动端适配 --- */
 @media (max-width: 768px) {
   .floating-player {
-    /* 改动开始：移动端也改为右上角 */
-    
-    /* 之前是 bottom: 80px，现在改为 top */
-    top: 70px; /* 避开移动端顶部 Header (约60px高) */
+    /* 保持右上角定位 */
+    top: 70px; 
     bottom: auto;
-    
-    right: 10px; /* 距离右边稍微近一点 */
-    padding-right: 15px;
-    
+    right: 10px; 
     /* 缩放基点改为右上角 */
     transform-origin: right top;
     transform: scale(0.9);
-    /* 改动结束 */
   }
   
   .track-name {
