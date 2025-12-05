@@ -38,6 +38,7 @@ export default {
             mobileStageStyle: {
               width: '200px',
               height: '400px',
+              pointerEvents: 'none',  // 不影响页面点击
             }, // 移动端舞台的样式
             motionPreloadStrategy: 'ALL',  // 动作预加载策略
             name: 'Ena', // 模型的唯一标识
@@ -52,7 +53,7 @@ export default {
             stageStyle: {
               width: '200px',
               height: '400px',
-              // pointerEvents: 'none',  // 不影响页面点击
+              pointerEvents: 'none',  // 不影响页面点击
             }
           }
         ],
@@ -69,6 +70,10 @@ export default {
           reloadMessage: '重新加载模型',
         },
         tips: {
+          style: {
+            width: '150px',
+            height: '100px',
+          },
           copyTips: {
             duration: 3000,
             message: [
@@ -98,10 +103,6 @@ export default {
             wordTheDay: false
           },
           messageLine: 6,
-          style: {
-            width: '150px',
-            height: '100px',
-          },
           welcomeTips: {
             duration: 6000,
             message: {
