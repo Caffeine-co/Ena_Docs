@@ -5,7 +5,6 @@
     :class="{ 'is-expanded': isExpanded, 'is-mobile': isMobile }"
   >
     <!-- 唱片区域 (点击切换收纳/展开) -->
-    <!-- disc-area 保持 @click.stop 确保点击此处只进行切换，不触发外部收纳 -->
     <div class="disc-area" @click.stop="handleDiscClick">
       
       <!-- 收纳状态下的环形进度条 (SVG) -->
@@ -38,7 +37,6 @@
     </div>
 
     <!-- 展开后的控制面板 -->
-    <!-- **修改**: 添加 @click.stop 阻止内部按钮的点击事件冒泡到 window，防止它们错误地触发外部收纳逻辑 -->
     <div class="controls-panel" @click.stop>
       <!-- 第一行：滚动歌曲信息 -->
       <div class="panel-row info-row">
@@ -296,6 +294,11 @@ const toggleMute = () => {
 const isDragging = ref(false)
 
 const startDrag = (type, event) => {
+  // **关键修改**: 对于触摸事件，立即阻止默认行为，防止浏览器将其解释为滚动。
+  if (event.touches) {
+      event.preventDefault()
+  }
+
   isDragging.value = true
   handleDrag(type, event) // 立即处理点击位置
 
@@ -315,6 +318,7 @@ const startDrag = (type, event) => {
 
   window.addEventListener('mousemove', moveHandler)
   window.addEventListener('mouseup', upHandler)
+  // 确保 touchmove 监听器是非 passive 的，允许调用 preventDefault
   window.addEventListener('touchmove', moveHandler, { passive: false })
   window.addEventListener('touchend', upHandler)
 }
@@ -323,7 +327,9 @@ const handleDrag = (type, event) => {
   let clientX = event.clientX
   if (event.touches && event.touches.length > 0) {
     clientX = event.touches[0].clientX
-    event.preventDefault() // 防止页面滚动
+    // 由于我们在 startDrag 中已经阻止了默认行为，这里可以保留（以防万一）或移除。
+    // 为了兼容性和健壮性，这里保留，但在 startDrag 中阻止是最关键的。
+    // event.preventDefault() // 移除此处的preventDefault，因为它在startDrag中已经处理
   }
 
   const el = type === 'progress' ? progressBarRef.value : volumeBarRef.value
