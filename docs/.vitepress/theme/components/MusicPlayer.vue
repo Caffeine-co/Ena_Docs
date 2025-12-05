@@ -1,125 +1,128 @@
 <template>
   <div 
-    class="floating-player" 
-    :class="{ 'is-playing': isPlaying, 'is-hovered': isHovered }"
-    @mouseenter="isHovered = true"
-    @mouseleave="isHovered = false"
+    ref="playerContainer"
+    class="music-player-wrapper" 
+    :class="{ 'is-expanded': isExpanded, 'is-mobile': isMobile }"
   >
-    <!-- 唱片/封面区域 -->
-    <div class="player-disc" @click="togglePlay">
-      <div class="disc-cover" :style="{ backgroundImage: `url(${currentTrack.cover || '/music/default-cover.png'})` }">
-        <div class="disc-center"></div>
-      </div>
-    </div>
-
-    <!-- 播放器主体内容 -->
-    <div class="player-content">
-      <!-- 歌曲信息 (悬停时显示) -->
-      <div class="track-details" v-show="isHovered || isMobile">
-        <div class="track-name">{{ currentTrack.title }}</div>
-        <div class="track-artist">{{ currentTrack.artist }}</div>
-      </div>
-
-      <!-- 控制按钮 -->
-      <div class="player-controls">
-        
-        <!-- 新增: 循环模式按钮 -->
-        <button 
-          class="ctrl-btn loop-btn" 
-          @click.stop="toggleLoopMode" 
-          :title="loopMode === 'list' ? '循环列表' : '单曲循环'"
-          :class="{ 'is-active': loopMode === 'single' }"
-        >
-          <!-- 列表循环 (Repeat All) Icon -->
-          <svg v-if="loopMode === 'list'" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="17 1 21 5 17 9"></polyline>
-              <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
-              <polyline points="7 23 3 19 7 15"></polyline>
-              <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
-          </svg>
-          <!-- 单曲循环 (Repeat One) Icon - **修改为包含数字 1** -->
-          <svg v-else viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="17 1 21 5 17 9"></polyline>
-              <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
-              <polyline points="7 23 3 19 7 15"></polyline>
-              <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
-              <!-- 数字 "1" 标记 -->
-              <path d="M12 10.5L12 15M11 11.5L12 10.5L13 11.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
-          </svg>
-        </button>
-        <!-- 结束: 循环模式按钮 -->
-
-        <button class="ctrl-btn prev" @click.stop="prevTrack" title="上一首">
-          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>
-        </button>
-        
-        <button class="ctrl-btn toggle" @click.stop="togglePlay" :title="isPlaying ? '暂停' : '播放'">
-          <svg v-if="!isPlaying" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-          <svg v-else viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-        </button>
-        
-        <button class="ctrl-btn next" @click.stop="nextTrack" title="下一首">
-          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
-        </button>
-      </div>
+    <!-- 唱片区域 (点击切换收纳/展开) -->
+    <!-- disc-area 保持 @click.stop 确保点击此处只进行切换，不触发外部收纳 -->
+    <div class="disc-area" @click.stop="handleDiscClick">
       
-      <!-- 进度条 (悬停时显示) -->
-      <div class="mini-progress" v-show="isHovered || isMobile" @click.stop="seek">
-        <!-- 移除了冗余的 progress-bg 元素，让 progress-fill 直接作为子元素 -->
-        <div class="progress-fill" :style="{ width: progress + '%' }"></div>
-      </div>
-      
-      <!-- 新增: 音量控制 (悬停时显示) -->
-      <div class="volume-control" v-show="isHovered || isMobile">
-        <!-- 音量图标 -->
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-            <!-- 大音量或中音量图标路径 -->
-            <path v-if="volume > 0.5" d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-            <!-- 小音量或静音图标路径 -->
-            <path v-else-if="volume > 0" d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-            <!-- 静音/无声图标：使用 X (叉号) 表示静音 -->
-            <template v-else>
-                <line x1="14" y1="8" x2="20" y2="16"></line>
-                <line x1="20" y1="8" x2="14" y2="16"></line>
-            </template>
-        </svg>
-        <input 
-          type="range" 
-          min="0" 
-          max="1" 
-          step="0.05" 
-          :value="volume" 
-          @input="setVolume"
-          class="volume-slider"
-          title="调整音量"
+      <!-- 收纳状态下的环形进度条 (SVG) -->
+      <svg class="circular-progress" width="90" height="90" viewBox="0 0 90 90" v-show="!isExpanded">
+        <!-- 背景圆环 (半径 42, 描边宽度 3) -->
+        <circle cx="45" cy="45" r="42" fill="none" stroke="var(--vp-c-divider)" stroke-width="3" />
+        <!-- 进度圆环 -->
+        <!-- cx/cy=45, r=42, 周长约 264 -->
+        <circle 
+          cx="45" cy="45" r="42" 
+          fill="none" 
+          stroke="var(--vp-c-brand)" 
+          stroke-width="3" 
+          stroke-linecap="round"
+          class="progress-ring"
+          :style="{ strokeDasharray: circumference, strokeDashoffset: dashOffset }"
+          transform="rotate(-90 45 45)"
         />
-      </div>
+      </svg>
 
-      <!-- 新增: 时间显示 (已注释掉，移除 X:XX / X:XX 显示) -->
-      <!--
-      <div class="time-display" v-show="isHovered || isMobile">
-        <span>{{ formattedTime }}</span> / <span>{{ formattedDuration }}</span>
+      <!-- 唱片本体 -->
+      <div class="disc-rotate-wrapper" :class="{ 'is-spinning': isPlaying }">
+        <div 
+          class="disc-cover" 
+          :style="{ backgroundImage: `url(${currentTrack.cover || '/music/default-cover.png'})` }"
+        >
+          <div class="disc-hole"></div>
+        </div>
       </div>
-      -->
     </div>
 
-    <!-- 隐藏的 Audio 元素 -->
-    <audio 
-      ref="audioRef" 
-      :src="currentTrack.src" 
-      @timeupdate="onTimeUpdate" 
-      @ended="onTrackEnded"
-      @loadedmetadata="onLoadedMetadata"
-      preload="auto"
-    ></audio>
+    <!-- 展开后的控制面板 -->
+    <!-- **修改**: 添加 @click.stop 阻止内部按钮的点击事件冒泡到 window，防止它们错误地触发外部收纳逻辑 -->
+    <div class="controls-panel" @click.stop>
+      <!-- 第一行：滚动歌曲信息 -->
+      <div class="panel-row info-row">
+        <div class="scrolling-text-container" :class="{ 'is-scrolling': isPlaying && isExpanded }">
+          <div class="scrolling-content">
+            <span class="song-title">{{ currentTrack.title }}</span>
+            <span class="song-artist"> - {{ currentTrack.artist }}</span>
+            <!-- 重复一份用于无缝滚动 -->
+            <span class="song-title spacer">{{ currentTrack.title }}</span>
+            <span class="song-artist"> - {{ currentTrack.artist }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 第二行：歌曲进度条 -->
+      <div class="panel-row progress-row">
+        <!-- 时间信息 (已优化为稳定显示) -->
+        <div class="time-hint">
+          <span class="current-time">{{ formatTime(currentTime) }}</span>
+          <span class="separator">/</span>
+          <span class="total-duration">{{ formatTime(duration) }}</span>
+        </div>
+        <div 
+          class="custom-slider-track" 
+          ref="progressBarRef"
+          @mousedown="startDrag('progress', $event)"
+          @touchstart="startDrag('progress', $event)"
+        >
+          <div class="slider-fill" :style="{ width: progressPercent + '%' }"></div>
+        </div>
+      </div>
+
+      <!-- 第三行：音量控制 -->
+      <div class="panel-row volume-row">
+        <div class="volume-icon" @click="toggleMute">
+           <svg v-if="volume > 0.5" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+           <svg v-else-if="volume > 0" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+           <svg v-else viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+        </div>
+        <div 
+          class="custom-slider-track" 
+          ref="volumeBarRef"
+          @mousedown="startDrag('volume', $event)"
+          @touchstart="startDrag('volume', $event)"
+        >
+          <div class="slider-fill" :style="{ width: (volume * 100) + '%' }"></div>
+        </div>
+      </div>
+
+      <!-- 第四行：播放控制按钮 -->
+      <div class="panel-row buttons-row">
+        <!-- 循环模式 -->
+        <button class="btn-icon small" @click="toggleLoopMode" :title="loopMode === 'list' ? '列表循环' : '单曲循环'">
+          <svg v-if="loopMode === 'list'" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+          <svg v-else viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path><text x="10" y="15" font-size="8" fill="currentColor" stroke="none" font-weight="bold">1</text></svg>
+        </button>
+
+        <!-- 上一首 -->
+        <button class="btn-icon" @click="prevTrack">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>
+        </button>
+
+        <!-- 播放/暂停 -->
+        <button class="btn-icon" @click="togglePlay">
+          <svg v-if="!isPlaying" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <svg v-else viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+        </button>
+
+        <!-- 下一首 -->
+        <button class="btn-icon" @click="nextTrack">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+        </button>
+      </div>
+    </div>
+
+    <audio ref="audioRef" :src="currentTrack.src" preload="auto"></audio>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 
-// --- 播放列表配置 (请根据实际情况修改) ---
+// --- 数据配置 ---
+// 请将音乐文件放在 docs/public/music/ 文件夹下
 const playlist = [
   {
     title: "限りなく灰色へ",
@@ -128,239 +131,324 @@ const playlist = [
     cover: "/music/jacket_s_090.png" 
   },
   {
-    title: "アイディスマイル",
-    artist: "25時、ナイトコードで。",
-    src: "/music/02 アイディスマイル.wav", 
-    cover: "/music/jacket_s_116.png" 
-  },
-  {
     title: "限りなく灰色へ (instrumental)",
     artist: "25時、ナイトコードで。",
     src: "/music/03 限りなく灰色へ (instrumental).wav", 
     cover: "/music/jacket_s_090.png" 
   },
-  {
-    title: "アイディスマイル (instrumental)",
-    artist: "25时、ナイトコードで。",
-    src: "/music/04 アイディスマイル (instrumental).wav", 
-    cover: "/music/jacket_s_116.png" 
-  },
+  // { title: "アイディスマイル", artist: "25時、ナイトコードで。", src: "/music/02 アイディスマイル.wav", cover: "/music/jacket_s_116.png" },
+  // { title: "アイディスマイル (instrumental)", artist: "25時、ナイトコードで。", src: "/music/04 アイディスマイル (instrumental).wav", cover: "/music/jacket_s_116.png" },
 ]
 
-// --- 状态管理 ---
+// --- 状态 ---
+const isExpanded = ref(false)
 const isPlaying = ref(false)
-const isHovered = ref(false)
-const isMobile = ref(false) // 用于检测移动端，保持展开状态
 const currentTrackIndex = ref(0)
-const audioRef = ref(null)
 const currentTime = ref(0)
 const duration = ref(0)
-const volume = ref(1.0) // 音量状态 (0.0 到 1.0)
-const loopMode = ref('list') // 'list' (循环列表) or 'single' (单曲循环)
+const volume = ref(0.5)
+const loopMode = ref('list') // 'list' | 'single'
+const isMobile = ref(false)
 
-const currentTrack = computed(() => playlist[currentTrackIndex.value] || {})
+// DOM Refs
+const audioRef = ref(null)
+const playerContainer = ref(null)
+const progressBarRef = ref(null)
+const volumeBarRef = ref(null)
 
-// 时间格式化工具
-const formatTime = (seconds) => {
-  if (isNaN(seconds) || seconds === 0) return '0:00'
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = Math.floor(seconds % 60)
-  // 确保秒数是两位数
-  const paddedSeconds = remainingSeconds < 10 ? '0' + remainingSeconds : remainingSeconds
-  return `${minutes}:${paddedSeconds}`
-}
+// --- 计算属性 ---
+const currentTrack = computed(() => playlist[currentTrackIndex.value] || { title: "无歌曲", artist: "N/A", src: "", cover: "" })
+const progressPercent = computed(() => duration.value ? (currentTime.value / duration.value) * 100 : 0)
 
-// 计算属性：进度百分比
-const progress = computed(() => {
-  // 核心计算逻辑： (当前时间 / 总时长) * 100
-  if (!duration.value || isNaN(duration.value) || duration.value === 0) return 0
-  return (currentTime.value / duration.value) * 100
-})
-
-// 计算属性：格式化的当前时间
-const formattedTime = computed(() => formatTime(currentTime.value))
-// 计算属性：格式化的总时长
-const formattedDuration = computed(() => formatTime(duration.value))
+// SVG 圆环计算 (r=42 => 周长 2 * PI * 42 ≈ 263.89)
+const circumference = 264
+const dashOffset = computed(() => circumference - (progressPercent.value / 100) * circumference)
 
 // --- 核心逻辑 ---
+
+// 初始化
+onMounted(() => {
+  setupAudioEvents()
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  // 全局点击监听：实现点击外部收纳
+  window.addEventListener('click', handleClickOutside)
+  
+  // 默认尝试播放 (浏览器可能会拦截)
+  setTimeout(() => {
+    if (audioRef.value) {
+      audioRef.value.volume = volume.value
+      playAudio()
+    }
+  }, 1000)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+  window.removeEventListener('click', handleClickOutside)
+  if (audioRef.value) {
+    audioRef.value.pause()
+  }
+})
+
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768
+}
+
+// 展开/收纳
+const handleDiscClick = () => {
+  isExpanded.value = !isExpanded.value
+}
+
+const handleClickOutside = (event) => {
+  // 只有在处于展开状态且点击目标不在播放器容器内时，才收纳
+  if (isExpanded.value && playerContainer.value && !playerContainer.value.contains(event.target)) {
+    isExpanded.value = false
+  }
+}
+
+// 音频控制
+const setupAudioEvents = () => {
+  const audio = audioRef.value
+  if (!audio) return
+
+  audio.addEventListener('timeupdate', () => {
+    // 仅在非拖动状态下才更新 currentTime，防止 timeupdate 事件干扰拖动平滑度
+    if(!isDragging.value) currentTime.value = audio.currentTime
+  })
+  audio.addEventListener('loadedmetadata', () => {
+    duration.value = audio.duration
+  })
+  audio.addEventListener('ended', onTrackEnded)
+  audio.addEventListener('error', (e) => console.error("Audio Error:", e))
+}
+
 const togglePlay = () => {
   if (!audioRef.value) return
   if (isPlaying.value) {
     audioRef.value.pause()
-    isPlaying.value = false // 暂停时，明确设置状态
+    isPlaying.value = false
   } else {
     playAudio()
   }
 }
 
-const playAudio = () => {
+const playAudio = async () => {
   if (!audioRef.value) return
-  const playPromise = audioRef.value.play()
-  if (playPromise !== undefined) {
-    playPromise
-      .then(() => { 
-        isPlaying.value = true // 成功播放，设置状态
-      })
-      .catch((error) => { 
-        // 播放失败，可能是浏览器阻止了自动播放
-        console.error("播放失败，请点击播放按钮手动播放。", error);
-        isPlaying.value = false;
-      })
+  try {
+    audioRef.value.volume = volume.value;
+    await audioRef.value.play()
+    isPlaying.value = true
+  } catch (err) {
+    console.warn("Autoplay blocked or playback failed:", err)
+    isPlaying.value = false
   }
 }
 
 const nextTrack = () => {
   let next = currentTrackIndex.value + 1
   if (next >= playlist.length) next = 0
-  currentTrackIndex.value = next
+  switchTrack(next)
 }
 
 const prevTrack = () => {
   let prev = currentTrackIndex.value - 1
   if (prev < 0) prev = playlist.length - 1
-  currentTrackIndex.value = prev
+  switchTrack(prev)
+}
+
+const switchTrack = (index) => {
+  currentTrackIndex.value = index
+  currentTime.value = 0
+  isPlaying.value = false // 先暂停 UI 状态
+  
+  nextTick(() => {
+    if (audioRef.value) {
+      audioRef.value.load()
+      playAudio()
+    }
+  })
 }
 
 const onTrackEnded = () => {
   if (loopMode.value === 'single') {
-    // 单曲循环: 重置时间并重新播放
-    audioRef.value.currentTime = 0;
-    playAudio();
+    audioRef.value.currentTime = 0
+    playAudio()
   } else {
-    // 列表循环: 播放下一首
-    nextTrack();
+    nextTrack()
   }
 }
 
 const toggleLoopMode = () => {
-  loopMode.value = loopMode.value === 'list' ? 'single' : 'list';
+  loopMode.value = loopMode.value === 'list' ? 'single' : 'list'
 }
 
-const onTimeUpdate = () => {
-  if (audioRef.value) {
-    // 更新当前播放时间，这将驱动 formattedTime 和 progress 变化
-    currentTime.value = audioRef.value.currentTime
+const toggleMute = () => {
+  if (volume.value > 0) {
+    volume.value = 0
+  } else {
+    volume.value = 0.5
   }
-  
-  // 持续检查 duration，确保在任何时候都能获取到
-  if (audioRef.value && duration.value === 0 && audioRef.value.duration) {
-      duration.value = audioRef.value.duration
+  if (audioRef.value) audioRef.value.volume = volume.value
+}
+
+// --- 拖拽逻辑 (兼容鼠标和触摸) ---
+const isDragging = ref(false)
+
+const startDrag = (type, event) => {
+  isDragging.value = true
+  handleDrag(type, event) // 立即处理点击位置
+
+  const moveHandler = (e) => handleDrag(type, e)
+  const upHandler = () => {
+    isDragging.value = false
+    // 拖动结束后，如果是进度条，需要更新 audio 元素的 currentTime
+    if (type === 'progress' && audioRef.value && duration.value) {
+        audioRef.value.currentTime = currentTime.value;
+    }
+
+    window.removeEventListener('mousemove', moveHandler)
+    window.removeEventListener('mouseup', upHandler)
+    window.removeEventListener('touchmove', moveHandler)
+    window.removeEventListener('touchend', upHandler)
+  }
+
+  window.addEventListener('mousemove', moveHandler)
+  window.addEventListener('mouseup', upHandler)
+  window.addEventListener('touchmove', moveHandler, { passive: false })
+  window.addEventListener('touchend', upHandler)
+}
+
+const handleDrag = (type, event) => {
+  let clientX = event.clientX
+  if (event.touches && event.touches.length > 0) {
+    clientX = event.touches[0].clientX
+    event.preventDefault() // 防止页面滚动
+  }
+
+  const el = type === 'progress' ? progressBarRef.value : volumeBarRef.value
+  if (!el) return
+
+  const rect = el.getBoundingClientRect()
+  let percentage = (clientX - rect.left) / rect.width
+  percentage = Math.max(0, Math.min(1, percentage))
+
+  if (type === 'progress') {
+    if (duration.value) {
+      // 拖动时仅更新 UI 状态的 currentTime
+      currentTime.value = percentage * duration.value
+    }
+  } else if (type === 'volume') {
+    volume.value = percentage
+    if (audioRef.value) audioRef.value.volume = percentage
   }
 }
 
-const onLoadedMetadata = () => {
-  if (audioRef.value) duration.value = audioRef.value.duration
+const formatTime = (seconds) => {
+  if (!seconds || isNaN(seconds)) return '0:00'
+  const m = Math.floor(seconds / 60)
+  const s = Math.floor(seconds % 60)
+  return `${m}:${s < 10 ? '0' + s : s}`
 }
-
-const seek = (e) => {
-  // 只有当 duration 有效时才允许拖动
-  if (!audioRef.value || !duration.value || duration.value === 0) return
-  const rect = e.currentTarget.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  const percentage = x / rect.width
-  audioRef.value.currentTime = percentage * duration.value
-}
-
-// 音量控制函数
-const setVolume = (e) => {
-  const newVolume = parseFloat(e.target.value);
-  volume.value = newVolume;
-  if (audioRef.value) {
-    audioRef.value.volume = newVolume;
-  }
-}
-
-// 监听切歌
-watch(currentTrackIndex, () => {
-  currentTime.value = 0
-  if (audioRef.value) {
-    // 强制加载新的音频源，确保元数据更新和准备播放
-    audioRef.value.load(); 
-  }
-  // 尝试播放
-  setTimeout(() => playAudio(), 100)
-})
-
-onMounted(() => {
-  // 简单的移动端检测
-  isMobile.value = window.innerWidth < 768
-  window.addEventListener('resize', () => {
-    isMobile.value = window.innerWidth < 768
-  })
-
-  // 在组件挂载后显式调用 load()，确保浏览器加载音频元数据
-  if (audioRef.value) {
-      audioRef.value.load(); 
-      // 关键：设置初始音量
-      audioRef.value.volume = volume.value;
-  }
-
-  // 尝试自动播放 
-  setTimeout(() => playAudio(), 1000)
-})
 </script>
 
 <style scoped>
-/* --- 容器定位 --- */
-.floating-player {
+/* --- 主容器 --- */
+.music-player-wrapper {
   position: fixed;
-  /* PC端：右上角，距离顶部一定距离避开Header */
   top: 100px; 
   right: 20px;
-  z-index: 100;
-  
+  z-index: 2000;
   display: flex;
   align-items: center;
-  background: var(--vp-c-bg-soft); /* 适配深色/浅色模式背景 */
-  backdrop-filter: blur(10px); /* 毛玻璃效果 */
+  background: var(--vp-c-bg-soft);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--vp-c-divider);
-  border-radius: 50px; /* 胶囊形状 */
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  padding: 8px;
-  padding-right: 20px;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  width: auto;
-  max-width: 300px;
-}
-
-/* 悬停或移动端时，增加阴影深度 */
-.floating-player:hover, .floating-player.is-hovered {
-  box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-  background: var(--vp-c-bg);
-}
-
-/* --- 唱片/封面动画 --- */
-.player-disc {
-  width: 50px;
-  height: 50px;
-  flex-shrink: 0;
-  border-radius: 50%;
+  border-radius: 45px; 
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  width: 90px; 
+  height: 90px; 
+  padding: 5px; 
+  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              border-radius 0.4s ease,
+              background-color 0.3s ease;
   overflow: hidden;
-  cursor: pointer;
-  position: relative;
-  border: 2px solid var(--vp-c-bg);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  z-index: 2;
-  margin-right: 12px;
 }
 
-/* 旋转动画 */
+/* 展开状态 */
+.music-player-wrapper.is-expanded {
+  width: 350px; 
+  border-radius: 20px; 
+  background: var(--vp-c-bg);
+  padding-right: 15px; 
+}
+
+/* --- 1. 唱片区域 --- */
+.disc-area {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 0.4s ease;
+}
+
+/* 展开时唱片稍微左移一点，与其他元素拉开距离 */
+.is-expanded .disc-area {
+  margin-right: 15px;
+}
+
+/* SVG 环形进度条 */
+.circular-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%; 
+  height: 100%; 
+  pointer-events: none;
+  transform: rotate(0deg);
+  transition: opacity 0.3s;
+  z-index: 1; 
+}
+
+/* 背景圆环使用更柔和的颜色，模拟轨道 */
+.circular-progress circle:first-child {
+  stroke: var(--vp-c-bg-soft);
+}
+
+.progress-ring {
+  transition: stroke-dashoffset 0.1s linear;
+}
+
+/* 唱片旋转容器 */
+.disc-rotate-wrapper {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  animation: spin 8s linear infinite;
+  animation-play-state: paused;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  z-index: 3; 
+}
+
+.disc-rotate-wrapper.is-spinning {
+  animation-play-state: running;
+}
+
 .disc-cover {
   width: 100%;
   height: 100%;
   background-size: cover;
   background-position: center;
   border-radius: 50%;
-  animation: rotate 10s linear infinite;
-  animation-play-state: paused;
   position: relative;
-}
-.floating-player.is-playing .disc-cover {
-  animation-play-state: running;
+  border: 4px solid var(--vp-c-bg-soft); 
 }
 
-/* 唱片中间的小圆点 */
-.disc-center {
+/* 唱片中间的孔 */
+.disc-hole {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -372,219 +460,176 @@ onMounted(() => {
   border: 1px solid var(--vp-c-divider);
 }
 
-/* --- 播放器主体 --- */
-.player-content {
+/* --- 2. 控制面板 (右侧区域) --- */
+.controls-panel {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  flex-grow: 1;
-}
-
-/* --- 歌曲信息 --- */
-.track-details {
-  margin-bottom: 4px;
-  animation: fadeIn 0.3s ease;
-}
-.track-name {
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.2;
-  white-space: nowrap;
-  max-width: 140px;
+  justify-content: space-evenly; 
+  height: 100%;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(10px);
+  transition: opacity 0.3s ease 0.1s, transform 0.3s ease 0.1s;
   overflow: hidden;
-  text-overflow: ellipsis;
-  
-  /* 1. 在这里添加 color 属性来改变歌名颜色 */
-  /* 例如：改为红色 */
-  /* color: #ff4d4f; */ 
-  /* 或者使用主题主色调 */
-  /* color: var(--vp-c-brand); */
-}
-.track-artist {
-  font-size: 11px;
-  
-  /* 2. 这里控制歌手文字颜色 */
-  /* 默认为次级文本色 var(--vp-c-text-2) */
-  color: var(--vp-c-text-2); 
-  
-  line-height: 1.2;
+  min-width: 0;
 }
 
-/* --- 控制按钮 --- */
-.player-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.ctrl-btn {
-  background: none;
-  border: none;
-  padding: 0;
-  
-  /* 3. 这里控制按钮图标的默认颜色 */
-  /* 默认为主要文本色 var(--vp-c-text-1) */
-  color: var(--vp-c-text-1);
-  
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s, transform 0.1s;
-}
-.ctrl-btn:hover {
-  /* 4. 这里控制鼠标悬停时按钮的颜色 */
-  color: var(--vp-c-brand);
-}
-/* 激活状态下的循环按钮高亮 */
-.ctrl-btn.loop-btn.is-active {
-    color: var(--vp-c-brand);
+.is-expanded .controls-panel {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
 }
 
-/* --- 控制按钮 --- */
-.player-controls {
+.panel-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-.ctrl-btn {
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--vp-c-text-1);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s, transform 0.1s;
-}
-.ctrl-btn:hover {
-  color: var(--vp-c-brand);
-}
-.ctrl-btn:active {
-  transform: scale(0.9);
-}
-
-/* --- 迷你进度条 (歌曲进度) --- */
-.mini-progress {
-  height: 3px;
   width: 100%;
+  min-height: 16px; 
+}
+
+/* 第一行：信息滚动 */
+.info-row {
+  height: 18px; 
+  font-size: 13px;
+  color: var(--vp-c-text-1);
+  position: relative;
+  /* 渐隐遮罩 */
+  -webkit-mask-image: linear-gradient(to right, transparent 5%, black 15%, black 85%, transparent 95%);
+  mask-image: linear-gradient(to right, transparent 5%, black 15%, black 85%, transparent 95%);
+}
+
+.scrolling-text-container {
+  white-space: nowrap;
+  overflow: hidden;
+  width: 100%;
+}
+
+.scrolling-content {
+  display: inline-block;
+}
+
+/* 滚动动画 */
+.is-scrolling .scrolling-content {
+  animation: scroll 12s linear infinite; 
+}
+
+.song-title {
+  font-weight: bold;
+}
+.song-artist {
+  color: var(--vp-c-text-2);
+}
+.spacer {
+  margin-left: 30px; 
+}
+
+/* 第二行：进度条 */
+.progress-row {
+  height: 14px; 
+  gap: 8px;
+  justify-content: space-between; 
+}
+
+/* 优化时间提示样式 */
+.time-hint {
+  font-size: 10px;
+  color: var(--vp-c-text-3);
+  font-variant-numeric: tabular-nums;
+  width: 70px; 
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+}
+
+.time-hint .separator {
+    margin: 0 2px;
+}
+
+/* 第三行：音量 */
+.volume-row {
+  height: 14px; 
+  gap: 6px;
+}
+.volume-icon {
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+/* 通用自定义滑块样式 (进度条 & 音量条) */
+.custom-slider-track {
+  flex: 1;
+  height: 4px; 
   background: var(--vp-c-divider);
   border-radius: 2px;
-  margin-top: 6px;
-  cursor: pointer;
   position: relative;
-  overflow: hidden;
+  cursor: pointer;
+  touch-action: none; 
 }
-.progress-fill {
-  height: 100%; 
+
+/* 增加热区，方便点击 */
+.custom-slider-track::after {
+  content: '';
+  position: absolute;
+  top: -5px; bottom: -5px; left: 0; right: 0;
+}
+
+.slider-fill {
+  height: 100%;
   background: var(--vp-c-brand);
   border-radius: 2px;
-  transition: width 0.1s linear; 
+  pointer-events: none;
+  box-shadow: 0 0 5px rgba(var(--vp-c-brand-rgb), 0.5);
 }
 
-/* --- 音量控制样式 --- */
-.volume-control {
+/* 第四行：控制按钮 */
+.buttons-row {
+  justify-content: space-between;
+  padding: 0 10px;
+  min-height: 28px;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--vp-c-text-1);
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 8px; /* 放在进度条下面 */
-  animation: fadeIn 0.3s ease;
-}
-.volume-control svg {
-    color: var(--vp-c-text-2);
-}
-
-/* --- 音量进度条样式 (目标: 修复 WebKit 渲染问题) --- */
-.volume-slider {
-  /* 基础重置和尺寸 */
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100px;
-  height: 3px; /* 匹配歌曲进度条高度 */
-  background: transparent; 
-  outline: none;
-  opacity: 1; 
-  transition: opacity 0.2s;
-  cursor: pointer;
-  padding: 0; 
-  margin: 0; 
-}
-
-/* 轨道样式 (Webkit - Chrome/Safari) */
-.volume-slider::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 3px; 
-  background: var(--vp-c-divider); /* 背景色 */
-  border-radius: 2px;
-  cursor: pointer;
-}
-
-/* 滑块头样式 (Webkit - Chrome/Safari) - 已修复：移除 box-shadow 填充黑客，改为小圆点滑块 */
-.volume-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 8px; /* 减小滑块尺寸 */
-  height: 8px;
+  justify-content: center;
+  padding: 4px;
   border-radius: 50%;
-  background: var(--vp-c-brand); /* 使用主题色作为滑块颜色 */
-  cursor: pointer;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* 添加轻微阴影 */
-  /* margin-top 使 8px 的滑块居中于 3px 的轨道上 */
-  margin-top: -2.5px; 
-  /* 移除了导致渲染错误的 box-shadow 进度条填充黑客 */
+  transition: background 0.2s, color 0.2s;
 }
 
-/* 轨道样式 (Firefox) */
-.volume-slider::-moz-range-track {
-  width: 100%;
-  height: 3px;
-  background: var(--vp-c-divider);
-  border-radius: 2px;
-  cursor: pointer;
+.btn-icon:hover {
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-brand);
 }
 
-/* 进度填充样式 (Firefox) - Firefox 支持这个来直接显示进度 */
-.volume-slider::-moz-range-progress {
-  background: var(--vp-c-brand); 
-  height: 3px;
-  border-radius: 2px;
-}
-
-/* 滑块头样式 (Mozilla) */
-.volume-slider::-moz-range-thumb {
-  width: 8px; /* 减小滑块尺寸 */
-  height: 8px;
-  border-radius: 50%;
-  background: var(--vp-c-brand); /* 使用主题色作为滑块颜色 */
-  cursor: pointer;
-  border: none;
-}
-
-
-/* --- 动画关键帧 --- */
-@keyframes rotate {
+/* 动画定义 */
+@keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(2px); }
-  to { opacity: 1; transform: translateY(0); }
+
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); } 
 }
 
-/* --- 移动端适配 --- */
+/* 移动端适配 */
 @media (max-width: 768px) {
-  .floating-player {
-    /* 保持右上角定位 */
-    top: 70px; 
-    bottom: auto;
-    right: 10px; 
-    /* 缩放基点改为右上角 */
-    transform-origin: right top;
-    transform: scale(0.9);
+  .music-player-wrapper {
+    top: 80px; 
+    right: 10px;
   }
-  
-  .track-name {
-    max-width: 100px; /* 移动端屏幕较窄，防止歌名过长 */
+
+  .music-player-wrapper.is-expanded {
+    width: 280px; 
   }
 }
 </style>
